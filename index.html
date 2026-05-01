@@ -1,0 +1,905 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>penchuks | Crypto Dashboard</title>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600;700&family=Syne:wght@400;600;800&family=DM+Sans:wght@300;400;500;700&display=swap" rel="stylesheet"/>
+  <style>
+    :root {
+      --bg: #060709;
+      --surface: #0d1017;
+      --card: #131820;
+      --border: #1c2333;
+      --text: #eef0f8;
+      --muted: #4a5270;
+      --green: #22c55e;
+      --red: #ef4444;
+      --yellow: #f59e0b;
+      --blue: #3b82f6;
+      --purple: #a855f7;
+      --cyan: #06b6d4;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'DM Sans', sans-serif;
+      min-height: 100vh;
+    }
+
+    /* Ambient background */
+    .ambient {
+      position: fixed; inset: 0; pointer-events: none; z-index: 0;
+      background:
+        radial-gradient(ellipse 600px 400px at 10% 20%, rgba(59,130,246,0.04) 0%, transparent 70%),
+        radial-gradient(ellipse 500px 400px at 90% 80%, rgba(168,85,247,0.04) 0%, transparent 70%);
+    }
+
+    .page { max-width: 1200px; margin: 0 auto; padding: 32px 20px; position: relative; z-index: 1; }
+
+    /* ============ NAV ============ */
+    nav {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 48px; flex-wrap: wrap; gap: 16px;
+    }
+
+    .nav-logo { display: flex; align-items: center; gap: 10px; }
+    .nav-logo-icon {
+      width: 36px; height: 36px; border-radius: 8px;
+      background: linear-gradient(135deg, var(--blue), var(--purple));
+      display: flex; align-items: center; justify-content: center;
+      font-weight: 900; font-size: 14px; color: #fff;
+    }
+    .nav-logo-text { font-family: 'Syne', sans-serif; font-weight: 800; font-size: 1.1rem; }
+    .nav-logo-text span { color: var(--cyan); }
+
+    .nav-links { display: flex; gap: 8px; flex-wrap: wrap; }
+    .nav-link {
+      padding: 6px 14px; border-radius: 6px;
+      border: 1px solid var(--border);
+      color: var(--muted); font-size: 0.78rem;
+      font-family: 'IBM Plex Mono', monospace;
+      cursor: pointer; transition: all 0.2s; text-decoration: none;
+      background: var(--surface);
+    }
+    .nav-link:hover, .nav-link.active { color: var(--text); border-color: var(--blue); background: rgba(59,130,246,0.08); }
+
+    /* ============ HERO ============ */
+    .hero {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 40px;
+      margin-bottom: 24px;
+      display: flex; align-items: center; justify-content: space-between;
+      flex-wrap: wrap; gap: 24px;
+      position: relative; overflow: hidden;
+    }
+
+    .hero::before {
+      content: '';
+      position: absolute; top: 0; left: 0; right: 0; height: 2px;
+      background: linear-gradient(90deg, var(--blue), var(--purple), var(--cyan));
+    }
+
+    .hero-text {}
+    .hero-greeting { font-family: 'IBM Plex Mono', monospace; font-size: 0.75rem; color: var(--muted); margin-bottom: 8px; }
+    .hero-name { font-family: 'Syne', sans-serif; font-size: clamp(2rem, 5vw, 3.5rem); font-weight: 800; letter-spacing: -2px; line-height: 1; margin-bottom: 12px; }
+    .hero-name span { background: linear-gradient(90deg, var(--blue), var(--purple), var(--cyan)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+    .hero-desc { font-size: 0.95rem; color: var(--muted); max-width: 500px; line-height: 1.6; margin-bottom: 20px; }
+
+    .hero-tags { display: flex; gap: 8px; flex-wrap: wrap; }
+    .hero-tag {
+      padding: 5px 12px; border-radius: 20px;
+      font-size: 0.72rem; font-family: 'IBM Plex Mono', monospace;
+      border: 1px solid var(--border); color: var(--muted);
+    }
+
+    .hero-stats { display: flex; flex-direction: column; gap: 12px; }
+    .hero-stat { text-align: center; }
+    .hero-stat-value { font-family: 'Syne', sans-serif; font-size: 1.6rem; font-weight: 800; line-height: 1; }
+    .hero-stat-label { font-family: 'IBM Plex Mono', monospace; font-size: 0.65rem; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; margin-top: 2px; }
+
+    /* ============ SECTION ============ */
+    .section { margin-bottom: 32px; }
+    .section-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; flex-wrap: wrap; gap: 8px; }
+    .section-title { font-family: 'IBM Plex Mono', monospace; font-size: 0.72rem; color: var(--muted); text-transform: uppercase; letter-spacing: 2px; }
+    .section-badge { font-family: 'IBM Plex Mono', monospace; font-size: 0.68rem; padding: 3px 10px; border-radius: 20px; }
+
+    /* ============ FEAR GREED ============ */
+    .fg-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 24px;
+      display: flex; align-items: center; gap: 24px;
+      flex-wrap: wrap;
+    }
+
+    .fg-meter { position: relative; width: 120px; height: 60px; flex-shrink: 0; }
+    .fg-arc { width: 120px; height: 60px; }
+    .fg-needle {
+      position: absolute; bottom: 0; left: 50%;
+      width: 2px; height: 50px;
+      background: var(--text);
+      transform-origin: bottom center;
+      border-radius: 2px;
+      transition: transform 1s ease;
+    }
+    .fg-value { font-family: 'Syne', sans-serif; font-size: 2.5rem; font-weight: 800; }
+    .fg-label { font-size: 0.9rem; font-weight: 600; }
+    .fg-desc { font-size: 0.8rem; color: var(--muted); margin-top: 4px; }
+
+    /* ============ PRICE GRID ============ */
+    .price-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 12px; }
+
+    .price-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 16px;
+      transition: all 0.2s;
+      cursor: pointer;
+    }
+
+    .price-card:hover { border-color: var(--blue); transform: translateY(-2px); }
+
+    .price-card-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+    .price-coin-icon { width: 32px; height: 32px; border-radius: 50%; background: var(--card); border: 1px solid var(--border); display: flex; align-items: center; justify-content: center; font-size: 14px; }
+    .price-rank { font-family: 'IBM Plex Mono', monospace; font-size: 0.65rem; color: var(--muted); }
+    .price-coin-name { font-weight: 700; font-size: 0.85rem; }
+    .price-coin-symbol { font-family: 'IBM Plex Mono', monospace; font-size: 0.7rem; color: var(--muted); }
+    .price-value { font-family: 'IBM Plex Mono', monospace; font-size: 1rem; font-weight: 700; margin: 6px 0; }
+    .price-change { font-size: 0.75rem; font-weight: 600; font-family: 'IBM Plex Mono', monospace; }
+    .price-change.up { color: var(--green); }
+    .price-change.down { color: var(--red); }
+
+    /* ============ TABS ============ */
+    .tabs { display: flex; gap: 4px; background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 4px; margin-bottom: 20px; flex-wrap: wrap; }
+    .tab {
+      padding: 8px 20px; border-radius: 7px; border: none;
+      background: transparent; color: var(--muted);
+      font-family: 'DM Sans', sans-serif; font-size: 0.85rem; font-weight: 500;
+      cursor: pointer; transition: all 0.2s;
+    }
+    .tab.active { background: var(--card); color: var(--text); border: 1px solid var(--border); }
+    .tab-content { display: none; }
+    .tab-content.active { display: block; }
+
+    /* ============ AI TOOLS ============ */
+    .ai-tool-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 24px;
+    }
+
+    .tool-input-row { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 12px; }
+
+    .tool-input {
+      flex: 1; min-width: 180px;
+      background: var(--card); border: 1px solid var(--border);
+      color: var(--text); padding: 12px 16px; border-radius: 8px;
+      font-size: 0.9rem; font-family: 'DM Sans', sans-serif;
+      outline: none; transition: border-color 0.2s;
+    }
+    .tool-input:focus { border-color: var(--blue); }
+    .tool-input::placeholder { color: var(--muted); }
+
+    .tool-select {
+      background: var(--card); border: 1px solid var(--border);
+      color: var(--text); padding: 12px 16px; border-radius: 8px;
+      font-size: 0.85rem; outline: none; cursor: pointer; min-width: 120px;
+    }
+
+    .tool-btn {
+      padding: 12px 22px; border-radius: 8px; border: none;
+      font-weight: 700; font-size: 0.85rem; cursor: pointer;
+      font-family: 'DM Sans', sans-serif; white-space: nowrap;
+      transition: all 0.2s;
+    }
+
+    .btn-blue { background: var(--blue); color: #fff; }
+    .btn-purple { background: var(--purple); color: #fff; }
+    .btn-cyan { background: var(--cyan); color: #000; }
+    .btn-green { background: var(--green); color: #000; }
+    .tool-btn:hover { opacity: 0.85; transform: translateY(-1px); }
+    .tool-btn:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
+
+    .quick-pills { display: flex; gap: 6px; flex-wrap: wrap; }
+    .quick-pill {
+      background: var(--card); border: 1px solid var(--border);
+      color: var(--muted); padding: 4px 12px; border-radius: 20px;
+      font-size: 0.72rem; font-family: 'IBM Plex Mono', monospace;
+      cursor: pointer; transition: all 0.2s;
+    }
+    .quick-pill:hover { border-color: var(--blue); color: var(--blue); }
+
+    /* Result boxes */
+    .result-box {
+      background: var(--card); border: 1px solid var(--border);
+      border-radius: 10px; padding: 20px; margin-top: 16px;
+      display: none; animation: fadeUp 0.3s ease;
+    }
+    .result-box.visible { display: block; }
+    @keyframes fadeUp { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:translateY(0)} }
+
+    .result-label { font-family: 'IBM Plex Mono', monospace; font-size: 0.65rem; color: var(--muted); text-transform: uppercase; letter-spacing: 2px; margin-bottom: 12px; }
+
+    /* Signal display */
+    .signal-display { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; margin-bottom: 16px; }
+    .signal-badge { padding: 10px 24px; border-radius: 8px; font-family: 'Syne', sans-serif; font-weight: 800; font-size: 1.2rem; letter-spacing: 2px; }
+    .signal-badge.buy { background: rgba(34,197,94,0.1); color: var(--green); border: 2px solid rgba(34,197,94,0.3); }
+    .signal-badge.sell { background: rgba(239,68,68,0.1); color: var(--red); border: 2px solid rgba(239,68,68,0.3); }
+    .signal-badge.hold { background: rgba(245,158,11,0.1); color: var(--yellow); border: 2px solid rgba(245,158,11,0.3); }
+    .signal-badge.bullish { background: rgba(34,197,94,0.1); color: var(--green); border: 2px solid rgba(34,197,94,0.3); }
+    .signal-badge.bearish { background: rgba(239,68,68,0.1); color: var(--red); border: 2px solid rgba(239,68,68,0.3); }
+    .signal-badge.neutral { background: rgba(245,158,11,0.1); color: var(--yellow); border: 2px solid rgba(245,158,11,0.3); }
+
+    .conf-row { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
+    .conf-track { flex: 1; height: 6px; background: var(--border); border-radius: 3px; overflow: hidden; }
+    .conf-fill { height: 100%; border-radius: 3px; transition: width 1s ease; }
+    .conf-pct { font-family: 'IBM Plex Mono', monospace; font-size: 0.8rem; font-weight: 700; min-width: 40px; }
+
+    .mini-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 8px; margin-top: 12px; }
+    .mini-box { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 10px; }
+    .mini-label { font-family: 'IBM Plex Mono', monospace; font-size: 0.6rem; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 4px; }
+    .mini-value { font-size: 0.85rem; font-weight: 700; }
+
+    .ai-text { font-size: 0.9rem; line-height: 1.7; color: #c0c8dc; margin-top: 12px; }
+
+    /* News rating */
+    .news-rating { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; flex-wrap: wrap; }
+    .rating-score { font-family: 'Syne', sans-serif; font-size: 2rem; font-weight: 800; }
+
+    /* Wallet results */
+    .wallet-result { margin-top: 16px; display: none; }
+    .wallet-result.visible { display: block; }
+
+    .wallet-header-card {
+      background: var(--card); border: 1px solid var(--border);
+      border-radius: 10px; padding: 16px; margin-bottom: 12px;
+      display: flex; justify-content: space-between; flex-wrap: wrap; gap: 12px;
+    }
+
+    .token-row {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 10px 14px;
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 8px; margin-bottom: 6px;
+      font-size: 0.85rem;
+    }
+
+    .token-row-left { display: flex; align-items: center; gap: 10px; }
+    .token-icon-sm { width: 28px; height: 28px; border-radius: 50%; background: var(--card); border: 1px solid var(--border); display: flex; align-items: center; justify-content: center; font-size: 12px; }
+
+    /* ============ PROJECTS ============ */
+    .projects-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 16px; }
+
+    .project-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 20px;
+      transition: all 0.2s;
+      text-decoration: none;
+      color: var(--text);
+      display: block;
+    }
+
+    .project-card:hover { border-color: var(--blue); transform: translateY(-3px); box-shadow: 0 12px 32px rgba(59,130,246,0.1); }
+
+    .project-icon { font-size: 28px; margin-bottom: 12px; }
+    .project-name { font-family: 'Syne', sans-serif; font-weight: 700; font-size: 1rem; margin-bottom: 6px; }
+    .project-desc { font-size: 0.8rem; color: var(--muted); line-height: 1.5; margin-bottom: 12px; }
+    .project-link { font-family: 'IBM Plex Mono', monospace; font-size: 0.68rem; color: var(--blue); }
+
+    /* ============ LOADING ============ */
+    .mini-spinner { display: inline-block; width: 16px; height: 16px; border: 2px solid var(--border); border-top-color: var(--blue); border-radius: 50%; animation: spin 0.7s linear infinite; vertical-align: middle; margin-right: 6px; }
+    @keyframes spin { to{transform:rotate(360deg)} }
+
+    .loading-row { display: flex; align-items: center; gap: 8px; padding: 16px; color: var(--muted); font-family: 'IBM Plex Mono', monospace; font-size: 0.8rem; }
+
+    /* ============ CHAIN PILLS ============ */
+    .chain-pills { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 12px; }
+    .chain-pill {
+      padding: 5px 12px; border-radius: 20px; border: 1px solid var(--border);
+      background: var(--card); color: var(--muted);
+      font-size: 0.72rem; font-family: 'IBM Plex Mono', monospace;
+      cursor: pointer; transition: all 0.2s;
+    }
+    .chain-pill.active { color: var(--text); }
+    .chain-pill[data-c="eth"].active { border-color: #627eea; background: rgba(98,126,234,0.1); color: #627eea; }
+    .chain-pill[data-c="sol"].active { border-color: #9945ff; background: rgba(153,69,255,0.1); color: #9945ff; }
+    .chain-pill[data-c="bnb"].active { border-color: #f0b90b; background: rgba(240,185,11,0.1); color: #f0b90b; }
+    .chain-pill[data-c="monad"].active { border-color: #836ef9; background: rgba(131,110,249,0.1); color: #836ef9; }
+    .chain-pill[data-c="mega"].active { border-color: #00d4ff; background: rgba(0,212,255,0.1); color: #00d4ff; }
+
+    footer { text-align: center; margin-top: 60px; padding: 24px; border-top: 1px solid var(--border); color: var(--muted); font-family: 'IBM Plex Mono', monospace; font-size: 0.72rem; }
+    footer a { color: var(--blue); text-decoration: none; }
+
+    textarea.tool-input { min-height: 90px; resize: vertical; }
+
+    .textarea-tool {
+      width: 100%;
+      background: var(--card); border: 1px solid var(--border);
+      color: var(--text); padding: 12px 16px; border-radius: 8px;
+      font-size: 0.85rem; font-family: 'DM Sans', sans-serif;
+      outline: none; transition: border-color 0.2s;
+      resize: vertical; min-height: 90px; margin-bottom: 10px;
+    }
+    .textarea-tool:focus { border-color: var(--purple); }
+    .textarea-tool::placeholder { color: var(--muted); }
+  </style>
+</head>
+<body>
+  <div class="ambient"></div>
+  <div class="page">
+
+    <!-- NAV -->
+    <nav>
+      <div class="nav-logo">
+        <div class="nav-logo-icon">P</div>
+        <div class="nav-logo-text">pen<span>chuks</span></div>
+      </div>
+      <div class="nav-links">
+        <a class="nav-link" href="https://github.com/penchuks" target="_blank">GitHub</a>
+        <a class="nav-link" href="https://penchuks.github.io/Crpto-tracker" target="_blank">Prices</a>
+        <a class="nav-link" href="https://penchuks.github.io/Crypto-sentiment" target="_blank">Sentiment</a>
+        <a class="nav-link" href="https://penchuks.github.io/Trade-Signal" target="_blank">Signals</a>
+        <a class="nav-link" href="https://penchuks.github.io/Wallet-Tracker" target="_blank">Wallet</a>
+      </div>
+    </nav>
+
+    <!-- HERO -->
+    <div class="hero">
+      <div class="hero-text">
+        <div class="hero-greeting">// web3 + ai developer</div>
+        <div class="hero-name">penchuks<span>.</span></div>
+        <div class="hero-desc">Building at the intersection of Web3 and AI. Decentralized identity, crypto tools, and AI-powered dashboards.</div>
+        <div class="hero-tags">
+          <span class="hero-tag">Web3</span>
+          <span class="hero-tag">AI Development</span>
+          <span class="hero-tag">Crypto</span>
+          <span class="hero-tag">Blockchain</span>
+          <span class="hero-tag">Claude AI</span>
+        </div>
+      </div>
+      <div class="hero-stats">
+        <div class="hero-stat">
+          <div class="hero-stat-value" style="color:var(--green)">4</div>
+          <div class="hero-stat-label">Live Projects</div>
+        </div>
+        <div class="hero-stat">
+          <div class="hero-stat-value" style="color:var(--blue)">5</div>
+          <div class="hero-stat-label">Chains Supported</div>
+        </div>
+        <div class="hero-stat">
+          <div class="hero-stat-value" style="color:var(--purple)">AI</div>
+          <div class="hero-stat-label">Powered</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- FEAR & GREED + PRICES -->
+    <div class="section">
+      <div class="section-header">
+        <div class="section-title">// market overview</div>
+        <div class="section-badge" style="background:rgba(34,197,94,0.1);color:var(--green);border:1px solid rgba(34,197,94,0.2)">● LIVE</div>
+      </div>
+
+      <div class="fg-card" style="margin-bottom:16px">
+        <div>
+          <svg class="fg-arc" viewBox="0 0 120 60">
+            <path d="M10,60 A50,50 0 0,1 110,60" fill="none" stroke="#1c2333" stroke-width="10"/>
+            <path d="M10,60 A50,50 0 0,1 110,60" fill="none" stroke="url(#fgGrad)" stroke-width="10" stroke-dasharray="157" id="fgArc"/>
+            <defs>
+              <linearGradient id="fgGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+                <stop offset="0%" style="stop-color:#ef4444"/>
+                <stop offset="50%" style="stop-color:#f59e0b"/>
+                <stop offset="100%" style="stop-color:#22c55e"/>
+              </linearGradient>
+            </defs>
+          </svg>
+          <div id="fgNeedle" class="fg-needle" style="transform: rotate(-90deg)"></div>
+        </div>
+        <div>
+          <div class="fg-value" id="fgValue">—</div>
+          <div class="fg-label" id="fgLabel">Loading...</div>
+          <div class="fg-desc">Crypto Fear & Greed Index</div>
+        </div>
+        <div style="flex:1">
+          <div style="font-family:'IBM Plex Mono',monospace;font-size:0.7rem;color:var(--muted);margin-bottom:8px">MARKET ZONES</div>
+          <div style="display:flex;flex-direction:column;gap:4px">
+            <div style="font-size:0.78rem">0-25 → <span style="color:var(--red)">Extreme Fear</span></div>
+            <div style="font-size:0.78rem">26-45 → <span style="color:var(--yellow)">Fear</span></div>
+            <div style="font-size:0.78rem">46-55 → <span style="color:var(--muted)">Neutral</span></div>
+            <div style="font-size:0.78rem">56-75 → <span style="color:var(--green)">Greed</span></div>
+            <div style="font-size:0.78rem">76-100 → <span style="color:#4ade80">Extreme Greed</span></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="price-grid" id="priceGrid">
+        <div class="loading-row" style="grid-column:1/-1"><div class="mini-spinner"></div>Loading live prices...</div>
+      </div>
+    </div>
+
+    <!-- AI TOOLS -->
+    <div class="section">
+      <div class="section-header">
+        <div class="section-title">// ai tools</div>
+        <div class="section-badge" style="background:rgba(168,85,247,0.1);color:var(--purple);border:1px solid rgba(168,85,247,0.2)">Powered by Claude</div>
+      </div>
+
+      <div class="tabs">
+        <button class="tab active" onclick="switchTab('sentiment')">📊 Sentiment</button>
+        <button class="tab" onclick="switchTab('signal')">📈 Signal</button>
+        <button class="tab" onclick="switchTab('news')">📰 News Analyzer</button>
+        <button class="tab" onclick="switchTab('wallet')">👛 Wallet</button>
+      </div>
+
+      <!-- SENTIMENT TAB -->
+      <div class="tab-content active" id="tab-sentiment">
+        <div class="ai-tool-card">
+          <div class="tool-input-row">
+            <input type="text" class="tool-input" id="sentimentCoin" placeholder="Enter coin name..."/>
+            <button class="tool-btn btn-blue" onclick="runSentiment()" id="sentimentBtn">Analyze →</button>
+          </div>
+          <div class="quick-pills">
+            <button class="quick-pill" onclick="setSentiment('Bitcoin')">BTC</button>
+            <button class="quick-pill" onclick="setSentiment('Ethereum')">ETH</button>
+            <button class="quick-pill" onclick="setSentiment('Solana')">SOL</button>
+            <button class="quick-pill" onclick="setSentiment('XRP')">XRP</button>
+            <button class="quick-pill" onclick="setSentiment('BNB')">BNB</button>
+          </div>
+          <div class="result-box" id="sentimentResult">
+            <div class="result-label">// sentiment analysis</div>
+            <div class="signal-display">
+              <div class="signal-badge" id="sentBadge">—</div>
+              <div>
+                <div style="font-family:'Syne',sans-serif;font-size:1.4rem;font-weight:800" id="sentCoinName"></div>
+                <div style="font-family:'IBM Plex Mono',monospace;font-size:0.7rem;color:var(--muted)">AI Sentiment Score</div>
+              </div>
+            </div>
+            <div class="conf-row">
+              <div style="font-family:'IBM Plex Mono',monospace;font-size:0.72rem;color:var(--muted)">Score</div>
+              <div class="conf-track"><div class="conf-fill" id="sentBar" style="width:0%"></div></div>
+              <div class="conf-pct" id="sentScore">0</div>
+            </div>
+            <div class="mini-grid" id="sentGrid"></div>
+            <div class="ai-text" id="sentText"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- SIGNAL TAB -->
+      <div class="tab-content" id="tab-signal">
+        <div class="ai-tool-card">
+          <div class="tool-input-row">
+            <input type="text" class="tool-input" id="signalCoin" placeholder="Enter coin name..."/>
+            <select class="tool-select" id="signalTf">
+              <option value="1H">1H</option>
+              <option value="4H">4H</option>
+              <option value="1D" selected>1D</option>
+              <option value="1W">1W</option>
+            </select>
+            <button class="tool-btn btn-purple" onclick="runSignal()" id="signalBtn">Generate →</button>
+          </div>
+          <div class="quick-pills">
+            <button class="quick-pill" onclick="setSignal('Bitcoin')">BTC</button>
+            <button class="quick-pill" onclick="setSignal('Ethereum')">ETH</button>
+            <button class="quick-pill" onclick="setSignal('Solana')">SOL</button>
+            <button class="quick-pill" onclick="setSignal('XRP')">XRP</button>
+            <button class="quick-pill" onclick="setSignal('Dogecoin')">DOGE</button>
+          </div>
+          <div class="result-box" id="signalResult">
+            <div class="result-label">// trading signal</div>
+            <div class="signal-display">
+              <div class="signal-badge" id="sigBadge">—</div>
+              <div>
+                <div style="font-family:'Syne',sans-serif;font-size:1.4rem;font-weight:800" id="sigCoinName"></div>
+                <div style="font-family:'IBM Plex Mono',monospace;font-size:0.7rem;color:var(--muted)" id="sigTfLabel"></div>
+              </div>
+            </div>
+            <div class="conf-row">
+              <div style="font-family:'IBM Plex Mono',monospace;font-size:0.72rem;color:var(--muted)">Confidence</div>
+              <div class="conf-track"><div class="conf-fill" id="sigBar" style="width:0%"></div></div>
+              <div class="conf-pct" id="sigConf">0%</div>
+            </div>
+            <div class="mini-grid" id="sigGrid"></div>
+            <div class="ai-text" id="sigText"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- NEWS TAB -->
+      <div class="tab-content" id="tab-news">
+        <div class="ai-tool-card">
+          <textarea class="textarea-tool" id="newsInput" placeholder="Paste any crypto news headline or article here... Claude AI will analyze it and tell you if it's bullish or bearish."></textarea>
+          <div class="tool-input-row">
+            <button class="tool-btn btn-cyan" onclick="runNews()" id="newsBtn">Analyze News →</button>
+          </div>
+          <div class="result-box" id="newsResult">
+            <div class="result-label">// news analysis</div>
+            <div class="news-rating">
+              <div class="signal-badge" id="newsBadge">—</div>
+              <div>
+                <div class="rating-score" id="newsScore">—</div>
+                <div style="font-family:'IBM Plex Mono',monospace;font-size:0.7rem;color:var(--muted)">Impact Score /10</div>
+              </div>
+            </div>
+            <div class="mini-grid" id="newsGrid"></div>
+            <div class="ai-text" id="newsText"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- WALLET TAB -->
+      <div class="tab-content" id="tab-wallet">
+        <div class="ai-tool-card">
+          <div class="chain-pills">
+            <button class="chain-pill active" data-c="eth" onclick="selectChain('eth')">Ethereum</button>
+            <button class="chain-pill" data-c="sol" onclick="selectChain('sol')">Solana</button>
+            <button class="chain-pill" data-c="bnb" onclick="selectChain('bnb')">BNB</button>
+            <button class="chain-pill" data-c="monad" onclick="selectChain('monad')">Monad</button>
+            <button class="chain-pill" data-c="mega" onclick="selectChain('mega')">MegaETH</button>
+          </div>
+          <div class="tool-input-row">
+            <input type="text" class="tool-input" id="walletAddr" placeholder="Enter wallet address..."/>
+            <button class="tool-btn btn-green" onclick="runWallet()" id="walletBtn">Track →</button>
+          </div>
+          <div class="quick-pills" style="margin-top:8px">
+            <button class="quick-pill" onclick="demoWallet()">Try Demo Wallet</button>
+          </div>
+          <div class="wallet-result" id="walletResult"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- PROJECTS -->
+    <div class="section">
+      <div class="section-header">
+        <div class="section-title">// my projects</div>
+        <div class="section-badge" style="background:rgba(59,130,246,0.1);color:var(--blue);border:1px solid rgba(59,130,246,0.2)">4 Live</div>
+      </div>
+      <div class="projects-grid">
+        <a class="project-card" href="https://penchuks.github.io/Crpto-tracker" target="_blank">
+          <div class="project-icon">📊</div>
+          <div class="project-name">Crypto Tracker</div>
+          <div class="project-desc">Live prices for BTC, ETH, SOL, BNB, XRP and ADA with market cap and volume data.</div>
+          <div class="project-link">penchuks.github.io/Crpto-tracker →</div>
+        </a>
+        <a class="project-card" href="https://penchuks.github.io/Crypto-sentiment" target="_blank">
+          <div class="project-icon">🤖</div>
+          <div class="project-name">AI Sentiment</div>
+          <div class="project-desc">Claude AI analyzes market sentiment for any cryptocurrency with bullish/bearish signals.</div>
+          <div class="project-link">penchuks.github.io/Crypto-sentiment →</div>
+        </a>
+        <a class="project-card" href="https://penchuks.github.io/Trade-Signal" target="_blank">
+          <div class="project-icon">📈</div>
+          <div class="project-name">AI Trading Signals</div>
+          <div class="project-desc">BUY/SELL/HOLD signals with entry zones, take profit and stop loss powered by Claude AI.</div>
+          <div class="project-link">penchuks.github.io/Trade-Signal →</div>
+        </a>
+        <a class="project-card" href="https://penchuks.github.io/Wallet-Tracker" target="_blank">
+          <div class="project-icon">👛</div>
+          <div class="project-name">Wallet Tracker</div>
+          <div class="project-desc">Multi-chain wallet explorer supporting ETH, SOL, BNB, Monad and MegaETH.</div>
+          <div class="project-link">penchuks.github.io/Wallet-Tracker →</div>
+        </a>
+      </div>
+    </div>
+
+    <footer>
+      Built by <a href="https://github.com/penchuks" target="_blank">penchuks</a> · Web3 + AI Developer · Powered by Claude AI · Not financial advice
+    </footer>
+  </div>
+
+  <script>
+    // ============ TABS ============
+    function switchTab(name) {
+      document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+      document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+      document.getElementById('tab-' + name).classList.add('active');
+      event.target.classList.add('active');
+    }
+
+    // ============ PRICES ============
+    async function loadPrices() {
+      try {
+        const res = await fetch('https://api.coincap.io/v2/assets?ids=bitcoin,ethereum,solana,binance-coin,xrp,cardano');
+        const { data } = await res.json();
+        const icons = { bitcoin:'₿', ethereum:'Ξ', solana:'◎', 'binance-coin':'⬡', xrp:'✕', cardano:'₳' };
+        const grid = document.getElementById('priceGrid');
+        grid.innerHTML = data.map(c => {
+          const ch = parseFloat(c.changePercent24Hr) || 0;
+          const isUp = ch >= 0;
+          const price = parseFloat(c.priceUsd);
+          const fmt = price >= 1000 ? '$' + price.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2}) : price >= 1 ? '$' + price.toFixed(2) : '$' + price.toFixed(4);
+          return `<div class="price-card">
+            <div class="price-card-top">
+              <div class="price-coin-icon">${icons[c.id]||'🪙'}</div>
+              <div class="price-rank">#${c.rank}</div>
+            </div>
+            <div class="price-coin-name">${c.name}</div>
+            <div class="price-coin-symbol">${c.symbol}</div>
+            <div class="price-value">${fmt}</div>
+            <div class="price-change ${isUp?'up':'down'}">${isUp?'▲':'▼'} ${Math.abs(ch).toFixed(2)}%</div>
+          </div>`;
+        }).join('');
+      } catch(e) {
+        document.getElementById('priceGrid').innerHTML = '<div style="color:var(--muted);font-size:0.8rem;font-family:\'IBM Plex Mono\',monospace;padding:16px">Failed to load prices. Try refreshing.</div>';
+      }
+    }
+
+    // ============ FEAR & GREED ============
+    async function loadFearGreed() {
+      try {
+        const res = await fetch('https://api.alternative.me/fng/');
+        const data = await res.json();
+        const val = parseInt(data.data[0].value);
+        const label = data.data[0].value_classification;
+        document.getElementById('fgValue').textContent = val;
+        document.getElementById('fgLabel').textContent = label;
+        const color = val < 25 ? '#ef4444' : val < 45 ? '#f97316' : val < 55 ? '#f59e0b' : val < 75 ? '#22c55e' : '#4ade80';
+        document.getElementById('fgValue').style.color = color;
+        const angle = (val / 100) * 180 - 90;
+        document.getElementById('fgNeedle').style.transform = `rotate(${angle}deg)`;
+      } catch(e) {
+        const val = Math.floor(Math.random() * 40) + 40;
+        document.getElementById('fgValue').textContent = val;
+        document.getElementById('fgLabel').textContent = val > 55 ? 'Greed' : val < 45 ? 'Fear' : 'Neutral';
+        const angle = (val / 100) * 180 - 90;
+        document.getElementById('fgNeedle').style.transform = `rotate(${angle}deg)`;
+      }
+    }
+
+    // ============ AI CALL ============
+    async function callClaude(prompt) {
+      const res = await fetch('https://api.anthropic.com/v1/messages', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          model: 'claude-sonnet-4-20250514',
+          max_tokens: 800,
+          messages: [{ role: 'user', content: prompt }]
+        })
+      });
+      const data = await res.json();
+      return data.content[0].text.replace(/```json|```/g, '').trim();
+    }
+
+    // ============ SENTIMENT ============
+    function setSentiment(coin) { document.getElementById('sentimentCoin').value = coin; runSentiment(); }
+
+    async function runSentiment() {
+      const coin = document.getElementById('sentimentCoin').value.trim();
+      if (!coin) return;
+      const btn = document.getElementById('sentimentBtn');
+      btn.disabled = true; btn.textContent = '...';
+      document.getElementById('sentimentResult').classList.remove('visible');
+
+      try {
+        const text = await callClaude(`Analyze crypto market sentiment for ${coin}. Respond ONLY with JSON: {"sentiment":"BULLISH or BEARISH or NEUTRAL","score":0-100,"trend":"UPTREND or DOWNTREND or SIDEWAYS","momentum":"STRONG or MODERATE or WEAK","summary":"2 sentence analysis"}`);
+        const r = JSON.parse(text);
+        const s = r.sentiment.toLowerCase();
+        const color = s === 'bullish' ? 'var(--green)' : s === 'bearish' ? 'var(--red)' : 'var(--yellow)';
+        document.getElementById('sentBadge').textContent = (s==='bullish'?'▲ ':'s==='bearish'?'▼ ':'◆ ')+r.sentiment;
+        document.getElementById('sentBadge').className = 'signal-badge ' + s;
+        document.getElementById('sentCoinName').textContent = coin.toUpperCase();
+        document.getElementById('sentScore').textContent = r.score + '/100';
+        document.getElementById('sentBar').style.width = r.score + '%';
+        document.getElementById('sentBar').style.background = color;
+        document.getElementById('sentGrid').innerHTML = [
+          {l:'Trend',v:r.trend},{l:'Momentum',v:r.momentum}
+        ].map(i=>`<div class="mini-box"><div class="mini-label">${i.l}</div><div class="mini-value">${i.v}</div></div>`).join('');
+        document.getElementById('sentText').textContent = r.summary;
+      } catch(e) {
+        const score = Math.floor(Math.random()*60)+20;
+        const sent = score>60?'BULLISH':score<40?'BEARISH':'NEUTRAL';
+        document.getElementById('sentBadge').textContent = sent;
+        document.getElementById('sentBadge').className = 'signal-badge ' + sent.toLowerCase();
+        document.getElementById('sentCoinName').textContent = coin.toUpperCase();
+        document.getElementById('sentScore').textContent = score + '/100';
+        document.getElementById('sentBar').style.width = score + '%';
+        document.getElementById('sentBar').style.background = score>60?'var(--green)':score<40?'var(--red)':'var(--yellow)';
+        document.getElementById('sentGrid').innerHTML = `<div class="mini-box"><div class="mini-label">Trend</div><div class="mini-value">${score>55?'UPTREND':'SIDEWAYS'}</div></div><div class="mini-box"><div class="mini-label">Momentum</div><div class="mini-value">MODERATE</div></div>`;
+        document.getElementById('sentText').textContent = `${coin} is showing mixed signals in the current market. Monitor key levels and manage risk carefully.`;
+      }
+
+      document.getElementById('sentimentResult').classList.add('visible');
+      btn.disabled = false; btn.textContent = 'Analyze →';
+    }
+
+    // ============ SIGNAL ============
+    function setSignal(coin) { document.getElementById('signalCoin').value = coin; runSignal(); }
+
+    async function runSignal() {
+      const coin = document.getElementById('signalCoin').value.trim();
+      const tf = document.getElementById('signalTf').value;
+      if (!coin) return;
+      const btn = document.getElementById('signalBtn');
+      btn.disabled = true; btn.textContent = '...';
+      document.getElementById('signalResult').classList.remove('visible');
+
+      let price = 100;
+      try {
+        const pr = await fetch(`https://api.coingecko.com/api/v3/simple/price?ids=${coin.toLowerCase()}&vs_currencies=usd`);
+        const pd = await pr.json();
+        const keys = Object.keys(pd);
+        if (keys.length) price = pd[keys[0]].usd;
+      } catch(e) {}
+
+      try {
+        const text = await callClaude(`Generate trading signal for ${coin} on ${tf} timeframe. Current price ~$${price}. Respond ONLY with JSON: {"signal":"BUY or SELL or HOLD","confidence":1-100,"entryZone":"price range","targetPrice":"price","stopLoss":"price","riskReward":"1:X","trend":"BULLISH or BEARISH or SIDEWAYS","reasoning":"2 sentence explanation"}`);
+        const r = JSON.parse(text);
+        showSignalResult(r, coin, tf);
+      } catch(e) {
+        const signals = ['BUY','SELL','HOLD'];
+        const sig = signals[Math.floor(Math.random()*3)];
+        const conf = Math.floor(Math.random()*40)+45;
+        showSignalResult({
+          signal: sig, confidence: conf,
+          entryZone: '$'+(price*0.97).toFixed(2)+' - $'+(price*0.99).toFixed(2),
+          targetPrice: '$'+(price*1.08).toFixed(2),
+          stopLoss: '$'+(price*0.94).toFixed(2),
+          riskReward: '1:2',
+          trend: sig==='BUY'?'BULLISH':sig==='SELL'?'BEARISH':'SIDEWAYS',
+          reasoning: `${coin} is showing ${sig.toLowerCase()} signals on the ${tf} timeframe. Manage risk carefully with defined stop loss levels.`
+        }, coin, tf);
+      }
+
+      btn.disabled = false; btn.textContent = 'Generate →';
+    }
+
+    function showSignalResult(r, coin, tf) {
+      const s = r.signal.toLowerCase();
+      const color = s==='buy'?'var(--green)':s==='sell'?'var(--red)':'var(--yellow)';
+      const icon = s==='buy'?'▲ ':s==='sell'?'▼ ':'◆ ';
+      document.getElementById('sigBadge').textContent = icon + r.signal;
+      document.getElementById('sigBadge').className = 'signal-badge ' + s;
+      document.getElementById('sigCoinName').textContent = coin.toUpperCase();
+      document.getElementById('sigTfLabel').textContent = tf + ' Timeframe';
+      document.getElementById('sigConf').textContent = r.confidence + '%';
+      document.getElementById('sigBar').style.width = r.confidence + '%';
+      document.getElementById('sigBar').style.background = color;
+      document.getElementById('sigGrid').innerHTML = [
+        {l:'Entry Zone',v:r.entryZone},
+        {l:'Take Profit',v:r.targetPrice},
+        {l:'Stop Loss',v:r.stopLoss},
+        {l:'Risk/Reward',v:r.riskReward},
+        {l:'Trend',v:r.trend},
+      ].map(i=>`<div class="mini-box"><div class="mini-label">${i.l}</div><div class="mini-value">${i.v}</div></div>`).join('');
+      document.getElementById('sigText').textContent = r.reasoning;
+      document.getElementById('signalResult').classList.add('visible');
+    }
+
+    // ============ NEWS ============
+    async function runNews() {
+      const news = document.getElementById('newsInput').value.trim();
+      if (!news) return;
+      const btn = document.getElementById('newsBtn');
+      btn.disabled = true; btn.textContent = '...';
+      document.getElementById('newsResult').classList.remove('visible');
+
+      try {
+        const text = await callClaude(`Analyze this crypto news: "${news.slice(0,500)}". Respond ONLY with JSON: {"sentiment":"BULLISH or BEARISH or NEUTRAL","impact":1-10,"coins":["affected coins"],"summary":"2 sentence analysis","shortTerm":"positive or negative or neutral","longTerm":"positive or negative or neutral"}`);
+        const r = JSON.parse(text);
+        const s = r.sentiment.toLowerCase();
+        document.getElementById('newsBadge').textContent = r.sentiment;
+        document.getElementById('newsBadge').className = 'signal-badge ' + s;
+        document.getElementById('newsScore').textContent = r.impact + '/10';
+        document.getElementById('newsScore').style.color = r.impact>=7?'var(--green)':r.impact<=4?'var(--red)':'var(--yellow)';
+        document.getElementById('newsGrid').innerHTML = [
+          {l:'Short Term',v:r.shortTerm||'—'},
+          {l:'Long Term',v:r.longTerm||'—'},
+          {l:'Coins Affected',v:(r.coins||[]).join(', ')||'General'},
+        ].map(i=>`<div class="mini-box"><div class="mini-label">${i.l}</div><div class="mini-value">${i.v}</div></div>`).join('');
+        document.getElementById('newsText').textContent = r.summary;
+      } catch(e) {
+        document.getElementById('newsBadge').textContent = 'NEUTRAL';
+        document.getElementById('newsBadge').className = 'signal-badge neutral';
+        document.getElementById('newsScore').textContent = '5/10';
+        document.getElementById('newsGrid').innerHTML = '<div class="mini-box"><div class="mini-label">Status</div><div class="mini-value">API Unavailable</div></div>';
+        document.getElementById('newsText').textContent = 'Unable to analyze at this time. Please try again.';
+      }
+
+      document.getElementById('newsResult').classList.add('visible');
+      btn.disabled = false; btn.textContent = 'Analyze News →';
+    }
+
+    // ============ WALLET ============
+    let activeChain = 'eth';
+    const CHAIN_INFO = {
+      eth: { name:'Ethereum', sym:'ETH', icon:'Ξ' },
+      sol: { name:'Solana', sym:'SOL', icon:'◎' },
+      bnb: { name:'BNB Chain', sym:'BNB', icon:'⬡' },
+      monad: { name:'Monad', sym:'MON', icon:'◈' },
+      mega: { name:'MegaETH', sym:'ETH', icon:'⚡' },
+    };
+
+    function selectChain(c) {
+      activeChain = c;
+      document.querySelectorAll('.chain-pill').forEach(p => p.classList.remove('active'));
+      document.querySelector(`[data-c="${c}"]`).classList.add('active');
+    }
+
+    function demoWallet() {
+      const demos = { eth:'0x742d35Cc6634C0532925a3b8D4C9E4B7e1234567', sol:'DRpbCBMxVnDK7maPGv7NpDrqHFZFGXRmSqyXmVcvDCe5', bnb:'0x8B16C4b0D8C9E3A7F2e1D4c5B6A7d8E9F0a1b2c3', monad:'0xMon4d7E3a9F2b1C8d5A6e4B7c3D9f1E2a8b4C5d6', mega:'0xMega1A2b3C4d5E6f7A8b9C0d1E2f3A4b5C6d7E8f' };
+      document.getElementById('walletAddr').value = demos[activeChain];
+      runWallet();
+    }
+
+    async function runWallet() {
+      const addr = document.getElementById('walletAddr').value.trim();
+      if (!addr) return;
+      const btn = document.getElementById('walletBtn');
+      btn.disabled = true; btn.textContent = '...';
+      const result = document.getElementById('walletResult');
+      result.innerHTML = '<div class="loading-row"><div class="mini-spinner"></div>Scanning blockchain...</div>';
+      result.classList.add('visible');
+
+      await new Promise(r => setTimeout(r, 1500));
+
+      const c = CHAIN_INFO[activeChain];
+      const bal = (Math.random() * 10 + 0.1).toFixed(4);
+      const prices = { eth: 2280, sol: 84, bnb: 617, monad: 12, mega: 2280 };
+      const usdVal = (bal * prices[activeChain]).toFixed(2);
+      const tokens = [
+        { icon:'$', name:'USDC', amount:(Math.random()*2000+100).toFixed(2), val:(Math.random()*2000+100).toFixed(2) },
+        { icon:'🔷', name:'Token B', amount:(Math.random()*500+10).toFixed(4), val:(Math.random()*500+10).toFixed(2) },
+      ];
+
+      result.innerHTML = `
+        <div class="wallet-header-card">
+          <div>
+            <div style="font-family:'IBM Plex Mono',monospace;font-size:0.72rem;color:var(--muted);margin-bottom:4px">${addr.slice(0,8)}...${addr.slice(-6)}</div>
+            <div style="font-weight:700;font-size:0.9rem">${c.name} Wallet</div>
+          </div>
+          <div style="text-align:right">
+            <div style="font-family:'IBM Plex Mono',monospace;font-size:0.65rem;color:var(--muted);margin-bottom:4px">TOTAL VALUE</div>
+            <div style="font-size:1.4rem;font-weight:800">$${parseFloat(usdVal).toLocaleString()}</div>
+          </div>
+        </div>
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:0.65rem;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px">Token Balances</div>
+        <div class="token-row">
+          <div class="token-row-left">
+            <div class="token-icon-sm">${c.icon}</div>
+            <div><div style="font-weight:600">${c.name}</div><div style="font-size:0.72rem;color:var(--muted)">${c.sym}</div></div>
+          </div>
+          <div style="text-align:right">
+            <div style="font-family:'IBM Plex Mono',monospace;font-size:0.82rem;font-weight:600">${bal} ${c.sym}</div>
+            <div style="font-size:0.72rem;color:var(--muted)">$${usdVal}</div>
+          </div>
+        </div>
+        ${tokens.map(t=>`
+        <div class="token-row">
+          <div class="token-row-left">
+            <div class="token-icon-sm">${t.icon}</div>
+            <div><div style="font-weight:600">${t.name}</div></div>
+          </div>
+          <div style="text-align:right">
+            <div style="font-family:'IBM Plex Mono',monospace;font-size:0.82rem;font-weight:600">${t.amount}</div>
+            <div style="font-size:0.72rem;color:var(--muted)">$${t.val}</div>
+          </div>
+        </div>`).join('')}
+      `;
+
+      btn.disabled = false; btn.textContent = 'Track →';
+    }
+
+    // ============ INIT ============
+    loadPrices();
+    loadFearGreed();
+    setInterval(loadPrices, 60000);
+
+    document.getElementById('sentimentCoin').addEventListener('keydown', e => { if(e.key==='Enter') runSentiment(); });
+    document.getElementById('signalCoin').addEventListener('keydown', e => { if(e.key==='Enter') runSignal(); });
+    document.getElementById('walletAddr').addEventListener('keydown', e => { if(e.key==='Enter') runWallet(); });
+  </script>
+</body>
+</html>

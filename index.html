@@ -432,7 +432,7 @@
     <div class="section">
       <div class="section-header">
         <div class="section-title">// ai tools</div>
-        <div class="section-badge" style="background:rgba(168,85,247,0.1);color:var(--purple);border:1px solid rgba(168,85,247,0.2)">Powered by Claude</div>
+        
       </div>
 
       <div class="tabs">
@@ -688,7 +688,7 @@
         const r = JSON.parse(text);
         const s = r.sentiment.toLowerCase();
         const color = s === 'bullish' ? 'var(--green)' : s === 'bearish' ? 'var(--red)' : 'var(--yellow)';
-        document.getElementById('sentBadge').textContent = (s==='bullish'?'▲ ':'s==='bearish'?'▼ ':'◆ ')+r.sentiment;
+        const icon = s==='bullish'?'▲ ':s==='bearish'?'▼ ':'◆ '; document.getElementById('sentBadge').textContent = icon + r.sentiment;
         document.getElementById('sentBadge').className = 'signal-badge ' + s;
         document.getElementById('sentCoinName').textContent = coin.toUpperCase();
         document.getElementById('sentScore').textContent = r.score + '/100';
